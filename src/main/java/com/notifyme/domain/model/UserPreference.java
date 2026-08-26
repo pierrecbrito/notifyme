@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -12,15 +13,15 @@ import java.util.Set;
 
 /**
  * Modelo de Preferências do Usuário (Cached no Redis).
- * 
- * Contém os canais escolhidos pelo usuário e os dados de contato
- * necessários para efetuar o disparo imediato sem consultar banco SQL.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserPreference implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private String userId;
 

@@ -1,16 +1,12 @@
 package com.notifyme.domain.event;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 
 /**
  * Evento de Domínio: Publicado na fila 'notifyme.video.published'
  * assim que o Webhook do YouTube é validado com sucesso.
- * 
- * Usamos Java 17 Record para garantir:
- * 1. Imutabilidade absoluta do evento em trânsito.
- * 2. Serialização e desserialização JSON instantânea e limpa.
- * 3. Criação de equals, hashCode e toString sem código repetitivo.
  */
 public record VideoPublishedEvent(
         String videoId,
@@ -20,6 +16,9 @@ public record VideoPublishedEvent(
         Instant publishedAt,
         Instant ingestedAt
 ) implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     /**
      * Construtor auxiliar para criar o evento preenchendo automaticamente o timestamp de ingestão.

@@ -9,17 +9,12 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 
 /**
  * Entidade DynamoDB: Mapeia a tabela 'user_subscriptions'.
- * 
- * Modelagem NoSQL para Escala:
- * - Partition Key (PK) = 'channel_id': Agrupa todos os seguidores do canal na mesma partição,
- *   permitindo consultas paginadas extremamente rápidas durante o Fan-out.
- * - Sort Key (SK) = 'user_id': Permite indexar e garantir que um usuário não se inscreva
- *   duplicadamente no mesmo canal.
  */
 @Setter
 @Builder
@@ -27,6 +22,9 @@ import java.time.Instant;
 @AllArgsConstructor
 @DynamoDbBean
 public class UserSubscription implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "user_subscriptions";
 

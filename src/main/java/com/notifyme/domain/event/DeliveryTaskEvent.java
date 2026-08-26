@@ -1,14 +1,12 @@
 package com.notifyme.domain.event;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
 /**
  * Tarefa de Envio: Gerada pelo Fan-out Service e enfileirada em 'notifyme.delivery.tasks'.
- * 
- * Cada instância desta mensagem representa o trabalho individual de entregar
- * a notificação de um novo vídeo para um usuário específico (seguidor).
  */
 public record DeliveryTaskEvent(
         String taskId,
@@ -21,6 +19,9 @@ public record DeliveryTaskEvent(
         Instant ingestedAt,
         int attempt
 ) implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     /**
      * Construtor de fábrica para criar uma nova tarefa com taskId gerado automaticamente

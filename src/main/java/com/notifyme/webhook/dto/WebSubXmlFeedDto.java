@@ -8,13 +8,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
 /**
  * DTO para desserialização do Atom XML Feed enviado pelo YouTube WebSub.
- * 
- * O Jackson XML converte o payload HTTP bruto diretamente para esta estrutura tipada.
  */
 @Data
 @Builder
@@ -23,6 +22,9 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "feed")
 public class WebSubXmlFeedDto implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @JacksonXmlProperty(localName = "title")
     private String feedTitle;
@@ -39,6 +41,9 @@ public class WebSubXmlFeedDto implements Serializable {
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FeedEntry implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         @JacksonXmlProperty(localName = "videoId", namespace = "http://www.youtube.com/xml/schemas/2015")
         private String videoId;
@@ -67,6 +72,9 @@ public class WebSubXmlFeedDto implements Serializable {
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FeedLink implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         @JacksonXmlProperty(isAttribute = true, localName = "href")
         private String href;
