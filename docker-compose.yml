@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # 1. RabbitMQ: Broker de Mensageria
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: notifyme-rabbitmq
+    ports:
+      - "5672:5672"    # Porta do protocolo AMQP (usada pelo Spring Boot)
+      - "15672:15672"  # Painel de Controle Web (http://localhost:15672 - login: guest / guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis: Cache em Memória e Idempotência
+  redis:
+    image: redis:7-alpine
+    container_name: notifyme-redis
+    ports:
+      - "6379:6379"    # Porta de comunicação padrão do Redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # 3. DynamoDB Local: Banco NoSQL Particionado da AWS rodando localmente
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: notifyme-dynamodb
+    user: root
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    working_dir: /home/dynamodblocal
+    ports:
+      - "8000:8000"    # Endpoint local do DynamoDB (http://localhost:8000)
+    volumes:
+      - ./docker/dynamodb-data:/home/dynamodblocal/data
+
+  # 4. DynamoDB Admin: Painel Visual Web para visualizar tabelas e itens no navegador
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    container_name: notifyme-dynamodb-admin
+    ports:
+      - "8001:8001"    # Interface gráfica Web (http://localhost:8001)
+    environment:
+      DYNAMO_ENDPOINT: "http://dynamodb-local:8000"
+      AWS_REGION: "us-east-1"
+    depends_on:
+      - dynamodb-local
