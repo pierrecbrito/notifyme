@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: notifyme-service
+
+  # 1. Configurações do RabbitMQ
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        concurrency: 2
+        max-concurrency: 10
+        prefetch: 50
+        acknowledge-mode: auto
+        retry:
+          enabled: true
+          initial-interval: 1000ms
+          max-interval: 10000ms
+          multiplier: 2.0
+          max-attempts: 3
+
+  # 2. Configurações do Redis Cache
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+
+# 3. Configurações da AWS / DynamoDB
+aws:
+  region: ${AWS_REGION:us-east-1}
+  dynamodb:
+    endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:8000}
+    access-key: ${AWS_ACCESS_KEY_ID:local-access-key}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:local-secret-key}
+
+# 4. Propriedades de Negócio do NotifyMe
+notifyme:
+  websub:
+    # Segredo compartilhado com o YouTube Hub para validação HMAC-SHA1
+    secret: ${WEBSUB_SECRET:notifyme-super-secret-key-2026}
+  fanout:
+    # Quantidade de inscritos processados por lote (chunk)
+    chunk-size: 500
+  queues:
+    video-published: notifyme.video.published
+    delivery-tasks: notifyme.delivery.tasks
+    delivery-dlq: notifyme.delivery.dlq
+  exchanges:
+    main: notifyme.exchange
+    dlx: notifyme.dlx
+  routing-keys:
+    video-published: video.published
+    delivery-task: delivery.task
+    delivery-dlq: delivery.dlq
