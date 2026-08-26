@@ -15,14 +15,14 @@
     <artifactId>notifyme-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>notifyme-service</name>
-    <description>Sistema de Notificações de Alta Escala com YouTube WebSub, RabbitMQ e DynamoDB</description>
+    <description>High-Scale Notification System with YouTube WebSub, RabbitMQ, Redis, and DynamoDB</description>
 
     <properties>
         <java.version>17</java.version>
         <aws.sdk.version>2.25.16</aws.sdk.version>
     </properties>
 
-    <!-- Gerenciador de dependências do AWS SDK v2 -->
+    <!-- AWS SDK v2 Dependency Management BOM -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -36,44 +36,44 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- 1. Web & REST API: Para receber os Webhooks do YouTube e expor APIs -->
+        <!-- 1. Web & REST API: For Webhook endpoints and user management APIs -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 2. XML Parser: O YouTube envia o payload WebSub em formato XML (Atom Feed) -->
+        <!-- 2. XML Parser: YouTube sends WebSub notifications in XML (Atom Feed format) -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-xml</artifactId>
         </dependency>
 
-        <!-- 3. Mensageria RabbitMQ: Para filas de novos vídeos, fan-out e tarefas de entrega -->
+        <!-- 3. Messaging: RabbitMQ for event queues, fan-out, and delivery tasks -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
-        <!-- 4. Cache Redis: Para preferências de usuário e trava de idempotência rápida -->
+        <!-- 4. Cache & Locks: Redis for fast user settings lookup and idempotency locks -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- 5. DynamoDB (AWS SDK v2 Enhanced Client): Para armazenar inscritos por channel_id -->
+        <!-- 5. DynamoDB (AWS SDK v2 Enhanced Client): Partitioned subscriber storage -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb-enhanced</artifactId>
         </dependency>
 
-        <!-- 6. Lombok: Reduz boilerplate gerando Getters, Setters, Construtores e Builders -->
+        <!-- 6. Lombok: Reduces boilerplate code for getters, setters, and builders -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- 7. Ferramentas de Teste: JUnit 5, Mockito e suporte a testes do RabbitMQ -->
+        <!-- 7. Testing Tools: JUnit 5, Mockito, and Spring AMQP Test Support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -88,7 +88,7 @@
 
     <build>
         <plugins>
-            <!-- Plugin para empacotar a aplicação em um JAR executável do Spring Boot -->
+            <!-- Spring Boot packaging plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

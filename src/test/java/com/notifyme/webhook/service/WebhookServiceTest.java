@@ -16,7 +16,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -44,14 +43,14 @@ class WebhookServiceTest {
     }
 
     @Test
-    @DisplayName("Deve validar assinatura, processar XML Atom do YouTube e publicar VideoPublishedEvent no RabbitMQ")
+    @DisplayName("Should validate signature, parse YouTube Atom XML, and publish VideoPublishedEvent to RabbitMQ")
     void shouldProcessNotificationAndPublishEvent() {
         String xml = """
                 <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns="http://www.w3.org/2005/Atom">
                   <entry>
                     <yt:videoId>v_987xyz</yt:videoId>
                     <yt:channelId>UC_CANAL_01</yt:channelId>
-                    <title>Vídeo Novo Incrível</title>
+                    <title>Amazing New Video</title>
                     <link rel="alternate" href="https://www.youtube.com/watch?v=v_987xyz"/>
                     <published>2026-08-26T10:00:00+00:00</published>
                   </entry>
@@ -65,7 +64,7 @@ class WebhookServiceTest {
 
         boolean result = webhookService.processNotification(rawPayload, signature);
 
-        assertTrue(result, "Deveria retornar true após processar com sucesso");
+        assertTrue(result, "Should return true after successful processing");
 
         ArgumentCaptor<VideoPublishedEvent> eventCaptor = ArgumentCaptor.forClass(VideoPublishedEvent.class);
         verify(rabbitTemplate, times(1)).convertAndSend(eq("notifyme.exchange"), eq("video.published"), eventCaptor.capture());
@@ -73,12 +72,12 @@ class WebhookServiceTest {
         VideoPublishedEvent captured = eventCaptor.getValue();
         assertEquals("v_987xyz", captured.videoId());
         assertEquals("UC_CANAL_01", captured.channelId());
-        assertEquals("Vídeo Novo Incrível", captured.title());
+        assertEquals("Amazing New Video", captured.title());
         assertEquals("https://www.youtube.com/watch?v=v_987xyz", captured.videoUrl());
     }
 
     @Test
-    @DisplayName("Deve rejeitar processamento se a assinatura HMAC for inválida")
+    @DisplayName("Should reject processing when HMAC signature is invalid")
     void shouldRejectWhenSignatureIsInvalid() {
         byte[] rawPayload = "<feed></feed>".getBytes(StandardCharsets.UTF_8);
         String signature = "sha1=wrong";
@@ -87,7 +86,7 @@ class WebhookServiceTest {
 
         boolean result = webhookService.processNotification(rawPayload, signature);
 
-        assertFalse(result, "Deveria retornar false quando a assinatura for inválida");
+        assertFalse(result, "Should return false when signature is invalid");
         verifyNoInteractions(rabbitTemplate);
     }
 }

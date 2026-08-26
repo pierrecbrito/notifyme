@@ -8,15 +8,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuração da Topologia do RabbitMQ (Exchanges, Queues, Bindings e Serializador JSON).
+ * RabbitMQ Topology Configuration (Exchanges, Queues, Bindings, and JSON Converter).
  * 
- * Topologia:
- * 1. Exchange Principal (notifyme.exchange):
- *    - Rota 'video.published' -> Fila 'notifyme.video.published'
- *    - Rota 'delivery.task'   -> Fila 'notifyme.delivery.tasks'
+ * Topology:
+ * 1. Main Exchange (notifyme.exchange):
+ *    - Route 'video.published' -> Queue 'notifyme.video.published'
+ *    - Route 'delivery.task'   -> Queue 'notifyme.delivery.tasks'
  * 
  * 2. Dead Letter Exchange (notifyme.dlx):
- *    - Rota 'delivery.dlq'    -> Fila 'notifyme.delivery.dlq' (armazena falhas definitivas)
+ *    - Route 'delivery.dlq'    -> Queue 'notifyme.delivery.dlq' (stores unrecoverable failures)
  */
 @Configuration
 public class RabbitMqConfig {
@@ -57,7 +57,7 @@ public class RabbitMqConfig {
         return new DirectExchange(dlxExchangeName, true, false);
     }
 
-    // --- 2. FILAS (QUEUES) ---
+    // --- 2. QUEUES ---
 
     @Bean
     public Queue videoPublishedQueue() {
@@ -65,9 +65,9 @@ public class RabbitMqConfig {
     }
 
     /**
-     * Fila de Tarefas de Envio.
-     * Configurada com Dead Letter Exchange (DLX): se o processamento falhar após
-     * todos os retries, o RabbitMQ move a mensagem automaticamente para a DLQ.
+     * Delivery Tasks Queue.
+     * Configured with Dead Letter Exchange (DLX): if task processing fails after
+     * all configured retries, RabbitMQ automatically moves the message to the DLQ.
      */
     @Bean
     public Queue deliveryTasksQueue() {
@@ -82,7 +82,7 @@ public class RabbitMqConfig {
         return QueueBuilder.durable(deliveryDlqName).build();
     }
 
-    // --- 3. BINDINGS (LIGAÇÕES ENTRE EXCHANGE E FILAS) ---
+    // --- 3. BINDINGS (CONNECTIONS BETWEEN EXCHANGES AND QUEUES) ---
 
     @Bean
     public Binding bindingVideoPublished(Queue videoPublishedQueue, DirectExchange mainExchange) {
@@ -105,11 +105,11 @@ public class RabbitMqConfig {
                 .with(deliveryDlqRoutingKey);
     }
 
-    // --- 4. SERIALIZADOR JSON ---
+    // --- 4. JSON SERIALIZER ---
 
     /**
-     * Permite trafegar DTOs e Records Java nas filas diretamente como JSON legível,
-     * sem precisar serializar e desserializar strings manualmente.
+     * Allows Java DTOs and Records to be published and consumed as clean JSON across queues
+     * without manual string serialization and deserialization.
      */
     @Bean
     public MessageConverter jsonMessageConverter() {

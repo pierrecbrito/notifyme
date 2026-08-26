@@ -5,7 +5,7 @@ spring:
   application:
     name: notifyme-service
 
-  # 1. Configurações do RabbitMQ
+  # 1. RabbitMQ Broker Settings
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -24,14 +24,14 @@ spring:
           multiplier: 2.0
           max-attempts: 3
 
-  # 2. Configurações do Redis Cache
+  # 2. Redis Cache Settings
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       timeout: 2000ms
 
-# 3. Configurações da AWS / DynamoDB
+# 3. AWS / DynamoDB Settings
 aws:
   region: ${AWS_REGION:us-east-1}
   dynamodb:
@@ -39,13 +39,13 @@ aws:
     access-key: ${AWS_ACCESS_KEY_ID:local-access-key}
     secret-key: ${AWS_SECRET_ACCESS_KEY:local-secret-key}
 
-# 4. Propriedades de Negócio do NotifyMe
+# 4. NotifyMe Application Properties
 notifyme:
   websub:
-    # Segredo compartilhado com o YouTube Hub para validação HMAC-SHA1
+    # Shared secret key used for HMAC-SHA1 signature verification with YouTube Hub
     secret: ${WEBSUB_SECRET:notifyme-super-secret-key-2026}
   fanout:
-    # Quantidade de inscritos processados por lote (chunk)
+    # Batch size for subscriber chunking
     chunk-size: 500
   queues:
     video-published: notifyme.video.published

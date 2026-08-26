@@ -50,14 +50,14 @@ class FanoutServiceTest {
 
         ReflectionTestUtils.setField(fanoutService, "mainExchange", "notifyme.exchange");
         ReflectionTestUtils.setField(fanoutService, "deliveryTaskRoutingKey", "delivery.task");
-        ReflectionTestUtils.setField(fanoutService, "chunkSize", 2); // chunk pequeno para teste
+        ReflectionTestUtils.setField(fanoutService, "chunkSize", 2); // small chunk size for testing
     }
 
     @Test
-    @DisplayName("Deve executar o fan-out e fatiar seguidores em chunks para envio ao RabbitMQ")
+    @DisplayName("Should execute fan-out, slicing subscribers in chunks and dispatching to RabbitMQ")
     void shouldProcessFanoutInChunks() {
         VideoPublishedEvent event = VideoPublishedEvent.of(
-                "v123", "UC_CHANNEL", "Vídeo de Teste", "https://youtube.com/v123", Instant.now()
+                "v123", "UC_CHANNEL", "Test Video", "https://youtube.com/v123", Instant.now()
         );
 
         String lockKey = RedisKeyConstants.VIDEO_IDEMPOTENCY_PREFIX + "v123";
@@ -68,24 +68,24 @@ class FanoutServiceTest {
 
         fanoutService.processFanout(event);
 
-        // 3 seguidores com chunkSize = 2 deve despachar 3 tarefas
+        // 3 subscribers with chunkSize = 2 should dispatch 3 individual tasks
         verify(rabbitTemplate, times(3)).convertAndSend(eq("notifyme.exchange"), eq("delivery.task"), any(Object.class));
     }
 
     @Test
-    @DisplayName("Deve descartar evento duplicado se a trava de idempotência já existir no Redis")
+    @DisplayName("Should discard duplicate video events if idempotency lock already exists in Redis")
     void shouldSkipDuplicateVideoEvent() {
         VideoPublishedEvent event = VideoPublishedEvent.of(
-                "v123", "UC_CHANNEL", "Vídeo Duplicado", "https://youtube.com/v123", Instant.now()
+                "v123", "UC_CHANNEL", "Duplicate Video", "https://youtube.com/v123", Instant.now()
         );
 
         String lockKey = RedisKeyConstants.VIDEO_IDEMPOTENCY_PREFIX + "v123";
-        // Já existe no Redis (setIfAbsent retorna false)
+        // Lock already present in Redis (setIfAbsent returns false)
         when(valueOperations.setIfAbsent(eq(lockKey), eq("PROCESSED"), any(Duration.class))).thenReturn(false);
 
         fanoutService.processFanout(event);
 
-        // Não deve consultar DynamoDB nem publicar no RabbitMQ
+        // Should not query DynamoDB nor publish tasks to RabbitMQ
         verifyNoInteractions(subscriptionRepository);
         verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), any(Object.class));
     }

@@ -1,21 +1,21 @@
 package com.notifyme.domain.model;
 
 /**
- * Enum que define os canais de notificação suportados pelo NotifyMe.
+ * Enum defining the supported notification delivery channels in NotifyMe.
  */
 public enum NotificationChannel {
     /**
-     * Notificação Push enviada para dispositivos móveis via Firebase Cloud Messaging (FCM).
+     * Mobile push notification sent via Firebase Cloud Messaging (FCM).
      */
     PUSH,
 
     /**
-     * E-mail transacional enviado via SendGrid / AWS SES.
+     * Transactional email sent via SendGrid / AWS SES.
      */
     EMAIL,
 
     /**
-     * Mensagem SMS enviada via Twilio.
+     * SMS text message sent via Twilio.
      */
     SMS
 }

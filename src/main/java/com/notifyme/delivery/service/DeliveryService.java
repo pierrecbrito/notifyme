@@ -13,7 +13,7 @@ import java.time.Instant;
 import java.util.*;
 
 /**
- * Camada de Serviço para a Execução e Entrega Multicanal de Notificações.
+ * Service Layer for Multi-Channel Notification Execution and Delivery.
  */
 @Slf4j
 @Service
@@ -35,18 +35,18 @@ public class DeliveryService {
     }
 
     /**
-     * Processa uma tarefa de entrega individual:
-     * 1. Consulta preferências no Redis via UserPreferenceService.
-     * 2. Despacha nos canais habilitados com isolamento de falhas para evitar re-envios duplicados.
-     * 3. Audita a latência total da entrega.
+     * Processes an individual delivery task:
+     * 1. Retrieves user preferences from Redis via UserPreferenceService.
+     * 2. Dispatches to active channels with channel-isolated error handling to prevent duplicate retries.
+     * 3. Audits end-to-end delivery latency.
      */
     public void processDelivery(DeliveryTaskEvent task) {
         long startTime = System.currentTimeMillis();
 
-        // 1. Busca preferências no Redis Cache
+        // 1. Retrieve preferences from Redis Cache
         Optional<UserPreference> optPreference = userPreferenceService.getPreference(task.userId());
         if (optPreference.isEmpty()) {
-            log.warn("Usuário '{}' não possui preferências cadastradas no Redis. Ignorando envio sem inventar dados falsos.", task.userId());
+            log.warn("User '{}' has no preferences stored in Redis. Skipping dispatch gracefully.", task.userId());
             return;
         }
 
@@ -54,11 +54,11 @@ public class DeliveryService {
         Set<NotificationChannel> enabledChannels = preference.getEnabledChannels();
 
         if (enabledChannels == null || enabledChannels.isEmpty()) {
-            log.info("Usuário '{}' não possui canais de notificação ativos.", task.userId());
+            log.info("User '{}' has no active notification channels.", task.userId());
             return;
         }
 
-        // 2. Disparo Multicanal com Isolamento de Erros por Canal
+        // 2. Multi-Channel Dispatch with Per-Channel Error Isolation
         int successCount = 0;
         int failureCount = 0;
         List<String> errors = new ArrayList<>();
@@ -72,25 +72,25 @@ public class DeliveryService {
                 } catch (Exception e) {
                     failureCount++;
                     errors.add(channel + ": " + e.getMessage());
-                    log.error("Falha ao entregar via {} para usuário '{}': {}", channel, task.userId(), e.getMessage());
+                    log.error("Failed to deliver via {} to user '{}': {}", channel, task.userId(), e.getMessage());
                 }
             } else {
-                log.warn("Nenhum provedor registrado para o canal {}", channel);
+                log.warn("No provider registered for channel {}", channel);
             }
         }
 
-        // Se TODOS os canais falharem, lançamos exceção para o RabbitMQ reprocessar
+        // Throw exception to trigger RabbitMQ retry ONLY if ALL channels failed
         if (successCount == 0 && failureCount > 0) {
-            throw new RuntimeException("Falha total na entrega para o usuário " + task.userId() + ": " + String.join(", ", errors));
+            throw new RuntimeException("Complete delivery failure for user " + task.userId() + ": " + String.join(", ", errors));
         }
 
-        // 3. Auditoria de Latência Ponta a Ponta
+        // 3. End-to-End Latency Auditing
         long processingTime = System.currentTimeMillis() - startTime;
         long e2eLatencyMs = task.ingestedAt() != null
                 ? Duration.between(task.ingestedAt(), Instant.now()).toMillis()
                 : processingTime;
 
-        log.info("🎯 [ENTREGA CONCLUÍDA] Usuário: {} | Tarefa: {} | Sucessos: {} | Falhas: {} | Latência Total: {}ms",
+        log.info("🎯 [DELIVERY COMPLETED] User: {} | Task: {} | Successes: {} | Failures: {} | Total Latency: {}ms",
                 task.userId(), task.taskId(), successCount, failureCount, e2eLatencyMs);
     }
 }

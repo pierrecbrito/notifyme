@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Provedor de Notificações por SMS via Twilio.
+ * SMS Notification Provider via Twilio.
  */
 @Slf4j
 @Component
@@ -23,16 +23,16 @@ public class SmsTwilioProvider implements NotificationProvider {
         String phoneNumber = preference.getPhoneNumber();
 
         if (phoneNumber == null || phoneNumber.isBlank()) {
-            log.warn("[SMS Twilio] Usuário {} não possui telefone cadastrado. Ignorando envio.",
+            log.warn("[SMS Twilio] User {} has no registered phone number. Skipping dispatch.",
                     task.userId());
             return;
         }
 
-        // Em produção, aqui usamos o Twilio Message.creator(...)
-        String messageBody = String.format("NotifyMe: Novo vídeo postado! '%s' - Assista agora: %s",
+        // In production, invoke Twilio Message.creator(...)
+        String messageBody = String.format("NotifyMe: New video published! '%s' - Watch now: %s",
                 task.title(), task.videoUrl());
 
-        log.info("[SMS Twilio] 📱 Enviando SMS para {} (Usuário {}). Mensagem: '{}'",
+        log.info("[SMS Twilio] 📱 Sending SMS to {} (User {}). Body: '{}'",
                 phoneNumber, task.userId(), messageBody);
     }
 }

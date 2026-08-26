@@ -7,8 +7,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Consumidor AMQP de Fan-out: Ouve a fila 'notifyme.video.published'
- * e delega o processamento de fatiamento e deduplicação para o FanoutService.
+ * AMQP Fan-out Consumer: Listens to the 'notifyme.video.published' queue
+ * and delegates chunking and deduplication logic to FanoutService.
  */
 @Slf4j
 @Component
@@ -22,7 +22,7 @@ public class VideoPublishedFanoutConsumer {
 
     @RabbitListener(queues = "${notifyme.queues.video-published:notifyme.video.published}")
     public void onVideoPublished(VideoPublishedEvent event) {
-        log.debug("Mensagem de vídeo publicado recebida da fila: {}", event.videoId());
+        log.debug("Video published message received from queue: {}", event.videoId());
         fanoutService.processFanout(event);
     }
 }

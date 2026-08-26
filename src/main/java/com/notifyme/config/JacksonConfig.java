@@ -5,14 +5,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuração de Beans do Jackson para parsing XML e JSON.
+ * Jackson configuration for XML and JSON parsing beans.
  */
 @Configuration
 public class JacksonConfig {
 
     /**
-     * Registra o XmlMapper no container de IoC do Spring,
-     * permitindo que seja injetado via construtor nos serviços.
+     * Registers XmlMapper as a Spring bean in the IoC container,
+     * allowing it to be injected via constructors into services.
      */
     @Bean
     public XmlMapper xmlMapper() {

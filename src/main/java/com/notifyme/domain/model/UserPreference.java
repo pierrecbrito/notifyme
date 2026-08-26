@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Modelo de Preferências do Usuário (Cached no Redis).
+ * User Preferences Model (Cached in Redis).
+ * 
+ * Contains selected notification channels and user contact details
+ * required for immediate dispatch without querying relational databases.
  */
 @Data
 @Builder
@@ -26,29 +29,29 @@ public class UserPreference implements Serializable {
     private String userId;
 
     /**
-     * Canais que o usuário escolheu para receber alertas (ex: PUSH, EMAIL, SMS).
+     * Channels enabled by the user (e.g., PUSH, EMAIL, SMS).
      */
     @Builder.Default
     private Set<NotificationChannel> enabledChannels = Set.of(NotificationChannel.PUSH);
 
     /**
-     * E-mail para disparo via SendGrid / SES.
+     * Destination email for SendGrid / AWS SES.
      */
     private String email;
 
     /**
-     * Número de telefone no padrão internacional (ex: +5511999998888) para SMS via Twilio.
+     * Destination phone number in E.164 format (e.g., +15551234567) for Twilio SMS.
      */
     private String phoneNumber;
 
     /**
-     * Tokens de dispositivos móveis para envio de Push via Firebase FCM.
+     * Mobile device registration tokens for Firebase Cloud Messaging (FCM).
      */
     @Builder.Default
     private List<String> deviceTokens = Collections.emptyList();
 
     /**
-     * Verifica se um determinado canal está ativo para este usuário.
+     * Checks if a given notification channel is active for this user.
      */
     public boolean isChannelEnabled(NotificationChannel channel) {
         return enabledChannels != null && enabledChannels.contains(channel);

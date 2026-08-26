@@ -5,8 +5,13 @@ import java.io.Serializable;
 import java.time.Instant;
 
 /**
- * Evento de Domínio: Publicado na fila 'notifyme.video.published'
- * assim que o Webhook do YouTube é validado com sucesso.
+ * Domain Event: Published to 'notifyme.video.published' queue
+ * once a YouTube WebSub webhook notification is successfully validated.
+ * 
+ * Uses Java 17 Record to provide:
+ * 1. Complete immutability while in transit.
+ * 2. Clean JSON serialization and deserialization.
+ * 3. Compact representation with auto-generated equals, hashCode, and toString.
  */
 public record VideoPublishedEvent(
         String videoId,
@@ -21,7 +26,7 @@ public record VideoPublishedEvent(
     private static final long serialVersionUID = 1L;
 
     /**
-     * Construtor auxiliar para criar o evento preenchendo automaticamente o timestamp de ingestão.
+     * Factory method that auto-populates the ingestion timestamp.
      */
     public static VideoPublishedEvent of(String videoId, String channelId, String title, String videoUrl, Instant publishedAt) {
         return new VideoPublishedEvent(

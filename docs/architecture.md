@@ -1,49 +1,49 @@
-# NotifyMe — Especificações de Arquitetura e Requisitos
+# NotifyMe — Architecture & Requirements Specification
 
-Documento de referência rápida para o desenvolvimento e evolução dos serviços do NotifyMe.
+Technical reference for system design, layering, and service evolution.
 
-## 1. Requisitos do Sistema
+## 1. System Requirements
 
-### Requisitos Funcionais
-- **Receber avisos do YouTube:** Identificar automaticamente quando um canal posta vídeo novo (WebSub/PubSubHubbub).
-- **Seguir canais:** Permitir ao usuário escolher de quais criadores quer receber alertas.
-- **Enviar notificações:** Disparar alertas via Push, E-mail e SMS.
-- **Escolha de canal de envio:** Usuário define preferência de canal de envio (ex.: apenas Push ou apenas E-mail).
-- **Histórico:** Exibir notificações passadas dentro do aplicativo.
+### Functional Requirements
+- **YouTube Updates Ingestion:** Automatically detect when a channel publishes a new video (WebSub/PubSubHubbub).
+- **Follow Channels:** Allow users to choose which creators they want to follow.
+- **Multi-Channel Delivery:** Dispatch alerts via Push Notifications, Email, and SMS.
+- **Delivery Channel Selection:** Enable users to configure preferred communication channels (e.g., Push only, Email only).
+- **History Log:** View past notifications within the application.
 
-### Requisitos Não Funcionais
-- **Escalabilidade:** Suportar milhões de notificações simultâneas em picos de grandes canais.
-- **Baixa Latência:** Entrega do aviso ao usuário final em menos de 5 segundos.
-- **Confiabilidade:** Nenhuma notificação perdida (garantias at-least-once com idempotência).
-- **Segurança:** Validar autenticidade via assinatura HMAC da notificação do YouTube (evitar fakes).
-- **Disponibilidade:** Manter fluxo de envio ativo mesmo em indisponibilidade do banco de histórico.
+### Non-Functional Requirements
+- **Scalability:** Support millions of simultaneous notifications during large creator traffic spikes.
+- **Low Latency:** End-to-end notification delivery in under 5 seconds.
+- **Reliability:** At-least-once delivery guarantee with idempotency and Dead Letter Queues (DLQ).
+- **Security:** Validate YouTube HMAC-SHA1 signatures to prevent spoofed/fake notifications.
+- **High Availability:** Maintain notification processing pipeline even during transient outages of secondary services.
 
 ---
 
-## 2. Visão Arquitetural
+## 2. Architectural Overview
 
-1. **Ingestão & Validação (Webhook Handler)**
-   - API Gateway / Load Balancer + Webhook Validator.
-   - Valida assinatura HMAC do payload XML do YouTube WebSub.
-   - Retorna `200 OK` em < 100ms.
-   - Publica evento na fila `New Video Queue`.
+1. **Ingestion & Validation (Webhook Handler)**
+   - API Gateway / Load Balancer + Webhook Controller & Service.
+   - Validates HMAC-SHA1 signature from YouTube WebSub XML payload.
+   - Responds `200 OK` in < 100ms.
+   - Publishes `VideoPublishedEvent` to `notifyme.video.published` queue.
 
-2. **Descoberta & Fan-out (Fan-out Service)**
-   - Fan-out Processor consome `New Video Queue`.
-   - Consulta banco particionado de inscritos (`User Subscriptions Sharded` por `channel_id`).
-   - Divide inscritos em lotes (*chunks* de 500) e envia para `Delivery Tasks Queue`.
+2. **Discovery & Fan-out (Fan-out Service)**
+   - `FanoutService` consumes `notifyme.video.published`.
+   - Acquires 24h atomic Redis lock for video deduplication.
+   - Queries partitioned subscriber records from DynamoDB (`channel_id` partition key).
+   - Slices subscribers into batches (chunks of 500) and dispatches tasks to `notifyme.delivery.tasks`.
 
-3. **Mensageria & Cache**
-   - Filas: RabbitMQ / Kafka / AWS SQS.
-   - Cache: Redis Cache (User Settings) para consultas de preferências de notificação em baixa latência.
+3. **Messaging & Cache**
+   - Broker: RabbitMQ (Topic/Direct Exchanges, DLQ routing, retry backoff).
+   - Cache: Redis Cache for user settings in-memory lookup (< 1ms).
 
-4. **Execução & Entrega (Delivery Workers)**
-   - Workers com autoescala (1..N).
-   - Busca configurações do usuário no Redis.
-   - Roteia para os provedores adequados.
-   - Resiliência: Retry com Exponential Backoff e Dead Letter Queue (DLQ).
+4. **Execution & Delivery (Delivery Workers)**
+   - Autoscaled consumers listening to `notifyme.delivery.tasks`.
+   - Reads contact details from Redis and routes to active channel providers.
+   - Resilience: Channel-isolated execution with Exponential Backoff and DLQ routing.
 
-5. **Provedores Externos**
-   - Push: Firebase FCM
-   - E-mail: SendGrid / AWS SES
+5. **External Providers**
+   - Push: Firebase Cloud Messaging (FCM)
+   - Email: SendGrid / AWS SES
    - SMS: Twilio

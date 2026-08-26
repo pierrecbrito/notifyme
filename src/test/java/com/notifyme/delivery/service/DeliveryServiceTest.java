@@ -47,11 +47,11 @@ class DeliveryServiceTest {
     }
 
     @Test
-    @DisplayName("Deve disparar apenas nos canais ativos do usuário")
+    @DisplayName("Should deliver notifications only to channels enabled by the user")
     void shouldDeliverToEnabledChannels() {
         DeliveryTaskEvent task = new DeliveryTaskEvent(
                 "task-1", "user-1", "channel-1", "video-1",
-                "Novo Vídeo", "https://youtube.com/v1", Instant.now(), Instant.now(), 1
+                "New Video", "https://youtube.com/v1", Instant.now(), Instant.now(), 1
         );
 
         UserPreference preference = UserPreference.builder()
@@ -69,11 +69,11 @@ class DeliveryServiceTest {
     }
 
     @Test
-    @DisplayName("Não deve inventar dados nem estourar erro se o usuário não tiver preferências no Redis")
+    @DisplayName("Should gracefully skip without error or fake tokens when user has no cached preferences")
     void shouldGracefullySkipWhenNoPreferences() {
         DeliveryTaskEvent task = new DeliveryTaskEvent(
                 "task-2", "user-unknown", "channel-1", "video-1",
-                "Novo Vídeo", "https://youtube.com/v1", Instant.now(), Instant.now(), 1
+                "New Video", "https://youtube.com/v1", Instant.now(), Instant.now(), 1
         );
 
         when(userPreferenceService.getPreference("user-unknown")).thenReturn(Optional.empty());
@@ -84,11 +84,11 @@ class DeliveryServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção para o RabbitMQ reprocessar se TODOS os canais falharem")
+    @DisplayName("Should throw exception to trigger RabbitMQ retry ONLY if ALL channels fail")
     void shouldThrowExceptionWhenAllChannelsFail() {
         DeliveryTaskEvent task = new DeliveryTaskEvent(
                 "task-3", "user-3", "channel-1", "video-1",
-                "Novo Vídeo", "https://youtube.com/v1", Instant.now(), Instant.now(), 1
+                "New Video", "https://youtube.com/v1", Instant.now(), Instant.now(), 1
         );
 
         UserPreference preference = UserPreference.builder()

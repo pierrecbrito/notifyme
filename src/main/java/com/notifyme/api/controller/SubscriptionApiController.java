@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Controller de Gerenciamento de Inscrições e Preferências de Usuários.
+ * Controller for Managing Subscriptions and User Preferences.
  * 
- * Camada REST que expõe contratos padronizados via ApiResponse<T> e delega para os Services.
+ * REST API layer exposing standardized ApiResponse<T> envelopes and delegating to services.
  */
 @Slf4j
 @RestController
@@ -35,14 +35,14 @@ public class SubscriptionApiController {
     }
 
     /**
-     * Inscreve um usuário em um canal do YouTube (salva no DynamoDB via SubscriptionService).
+     * Subscribes a user to a YouTube creator channel (stored in DynamoDB via SubscriptionService).
      */
     @PostMapping("/subscriptions")
     public ResponseEntity<ApiResponse<Void>> subscribeUser(@RequestBody SubscribeRequestDto request) {
         try {
             subscriptionService.subscribe(request);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.ok(String.format("Usuário '%s' inscrito com sucesso no canal '%s'",
+                    .body(ApiResponse.ok(String.format("User '%s' subscribed successfully to channel '%s'",
                             request.getUserId(), request.getChannelId())));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -50,16 +50,16 @@ public class SubscriptionApiController {
     }
 
     /**
-     * Retorna a lista de seguidores ativos de um canal do YouTube.
+     * Returns the list of active subscribers for a given YouTube creator channel.
      */
     @GetMapping("/subscriptions/{channelId}")
     public ResponseEntity<ApiResponse<List<String>>> getSubscribers(@PathVariable String channelId) {
         List<String> subscribers = subscriptionService.getActiveSubscribers(channelId);
-        return ResponseEntity.ok(ApiResponse.ok("Seguidores recuperados com sucesso", subscribers));
+        return ResponseEntity.ok(ApiResponse.ok("Subscribers retrieved successfully", subscribers));
     }
 
     /**
-     * Define ou atualiza as preferências de notificação do usuário (salva no Redis Cache).
+     * Creates or updates notification preferences for a user (stored in Redis Cache).
      */
     @PostMapping("/users/{userId}/preferences")
     public ResponseEntity<ApiResponse<Void>> saveUserPreferences(
@@ -69,11 +69,11 @@ public class SubscriptionApiController {
         preference.setUserId(userId);
         userPreferenceService.savePreference(preference);
 
-        return ResponseEntity.ok(ApiResponse.ok("Preferências salvas com sucesso no Redis para o usuário: " + userId));
+        return ResponseEntity.ok(ApiResponse.ok("Preferences saved successfully in Redis for user: " + userId));
     }
 
     /**
-     * Consulta as preferências de um usuário gravadas no Redis.
+     * Retrieves cached user notification preferences from Redis.
      */
     @GetMapping("/users/{userId}/preferences")
     public ResponseEntity<ApiResponse<UserPreference>> getUserPreferences(@PathVariable String userId) {
@@ -81,9 +81,9 @@ public class SubscriptionApiController {
 
         if (preference.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Nenhuma preferência em cache para o usuário: " + userId));
+                    .body(ApiResponse.error("No cached preferences found for user: " + userId));
         }
 
-        return ResponseEntity.ok(ApiResponse.ok("Preferências encontradas", preference.get()));
+        return ResponseEntity.ok(ApiResponse.ok("Preferences found", preference.get()));
     }
 }

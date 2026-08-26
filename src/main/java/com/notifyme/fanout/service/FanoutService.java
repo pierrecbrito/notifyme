@@ -14,7 +14,7 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * Camada de Serviço para a Lógica de Descoberta e Fan-out de Notificações.
+ * Service Layer for Notification Discovery and Fan-out Logic.
  */
 @Slf4j
 @Service
@@ -46,37 +46,37 @@ public class FanoutService {
     }
 
     /**
-     * Executa o processo de Fan-out para um evento de vídeo publicado:
-     * 1. Verifica e adquire trava de idempotência no Redis.
-     * 2. Consulta seguidores ativos no DynamoDB.
-     * 3. Fatia a lista em chunks e enfileira as tarefas individuais no RabbitMQ.
+     * Executes the Fan-out process for a published video event:
+     * 1. Checks and acquires an atomic idempotency lock in Redis (SETNX).
+     * 2. Queries active subscribers from DynamoDB.
+     * 3. Slices the subscriber list into chunks and enqueues individual delivery tasks to RabbitMQ.
      */
     public void processFanout(VideoPublishedEvent event) {
         long startTime = System.currentTimeMillis();
 
-        // 1. Idempotência / Deduplicação com Redis (SETNX)
+        // 1. Idempotency / Deduplication with Redis (SETNX)
         String lockKey = RedisKeyConstants.VIDEO_IDEMPOTENCY_PREFIX + event.videoId();
         Boolean isFirstTime = redisTemplate.opsForValue().setIfAbsent(lockKey, "PROCESSED", LOCK_EXPIRATION);
 
         if (Boolean.FALSE.equals(isFirstTime)) {
-            log.warn("Vídeo '{}' ({}) já foi processado anteriormente. Ignorando evento duplicado.",
+            log.warn("Video '{}' ({}) has already been processed. Ignoring duplicate event.",
                     event.title(), event.videoId());
             return;
         }
 
-        // 2. Consulta de Inscritos Particionados no DynamoDB
+        // 2. Query Partitioned Subscribers from DynamoDB
         List<String> subscriberUserIds = subscriptionRepository.findActiveSubscriberIdsByChannelId(event.channelId());
         int totalSubscribers = subscriberUserIds.size();
 
         if (totalSubscribers == 0) {
-            log.info("Nenhum seguidor ativo encontrado para o canal '{}'", event.channelId());
+            log.info("No active subscribers found for channel '{}'", event.channelId());
             return;
         }
 
-        log.info("Encontrados {} seguidores ativos para o canal '{}'. Fatiando em lotes de {}...",
+        log.info("Found {} active subscribers for channel '{}'. Slicing in batches of {}...",
                 totalSubscribers, event.channelId(), chunkSize);
 
-        // 3. Fatiamento em Lotes (Chunks) e Enfileiramento das Tarefas de Entrega
+        // 3. Chunking and Enqueuing Delivery Tasks
         int dispatchedCount = 0;
         for (int i = 0; i < totalSubscribers; i += chunkSize) {
             int end = Math.min(i + chunkSize, totalSubscribers);
@@ -88,11 +88,11 @@ public class FanoutService {
                 dispatchedCount++;
             }
 
-            log.debug("Chunk [{}-{}] de {} tarefas enfileirado com sucesso", i + 1, end, totalSubscribers);
+            log.debug("Chunk [{}-{}] of {} tasks enqueued successfully", i + 1, end, totalSubscribers);
         }
 
         long duration = System.currentTimeMillis() - startTime;
-        log.info("Fan-out concluído para o vídeo '{}'. {} tarefas despachadas em {}ms",
+        log.info("Fan-out completed for video '{}'. {} tasks dispatched in {}ms",
                 event.videoId(), dispatchedCount, duration);
     }
 }

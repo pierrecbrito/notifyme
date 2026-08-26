@@ -4,14 +4,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Ponto de entrada da aplicação NotifyMe.
+ * Main application entry point for NotifyMe.
  * 
- * A anotação @SpringBootApplication habilita:
- * 1. @Configuration: Permite registrar beans customizados no contexto do Spring.
- * 2. @EnableAutoConfiguration: Configura automaticamente RabbitMQ, Redis e Web MVC
- *    com base nas dependências do pom.xml e nas propriedades do application.yml.
- * 3. @ComponentScan: Varre o pacote 'com.notifyme' e sub-pacotes em busca de 
- *    Controllers, Services, Repositories e Components.
+ * The @SpringBootApplication annotation enables:
+ * 1. @Configuration: Allows registering custom beans into the Spring application context.
+ * 2. @EnableAutoConfiguration: Automatically configures RabbitMQ, Redis, and Web MVC
+ *    based on pom.xml dependencies and application.yml settings.
+ * 3. @ComponentScan: Scans the 'com.notifyme' package and subpackages for
+ *    Controllers, Services, Repositories, and Components.
  */
 @SpringBootApplication
 public class NotifyMeApplication {

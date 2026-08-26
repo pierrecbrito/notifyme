@@ -23,7 +23,7 @@ class HmacSignatureValidatorTest {
     }
 
     @Test
-    @DisplayName("Deve validar com sucesso uma assinatura HMAC-SHA1 legítima do YouTube")
+    @DisplayName("Should successfully validate a legitimate YouTube HMAC-SHA1 signature")
     void shouldValidateLegitimateSignature() throws Exception {
         String xmlPayload = "<feed><entry><yt:videoId>abc123xyz</yt:videoId></entry></feed>";
         byte[] payloadBytes = xmlPayload.getBytes(StandardCharsets.UTF_8);
@@ -33,11 +33,11 @@ class HmacSignatureValidatorTest {
 
         boolean isValid = validator.isValid(payloadBytes, signatureHeader);
 
-        assertTrue(isValid, "A assinatura legítima deveria ter sido validada com sucesso");
+        assertTrue(isValid, "Legitimate signature should be validated successfully");
     }
 
     @Test
-    @DisplayName("Deve rejeitar se o payload foi alterado após a assinatura (ataque de adulteração)")
+    @DisplayName("Should reject tampered payloads when signature does not match (tampering attack)")
     void shouldRejectTamperedPayload() throws Exception {
         String originalXml = "<feed><entry><yt:videoId>abc123xyz</yt:videoId></entry></feed>";
         String tamperedXml = "<feed><entry><yt:videoId>FAKE_VIDEO</yt:videoId></entry></feed>";
@@ -45,17 +45,17 @@ class HmacSignatureValidatorTest {
         byte[] originalBytes = originalXml.getBytes(StandardCharsets.UTF_8);
         byte[] tamperedBytes = tamperedXml.getBytes(StandardCharsets.UTF_8);
 
-        // Assinatura gerada sobre o original, mas enviada com payload adulterado
+        // Signature generated over original payload, sent with tampered payload
         String signatureHex = calculateHmacSha1Hex(originalBytes, TEST_SECRET);
         String signatureHeader = "sha1=" + signatureHex;
 
         boolean isValid = validator.isValid(tamperedBytes, signatureHeader);
 
-        assertFalse(isValid, "Payload adulterado deve ser rejeitado pelo validador");
+        assertFalse(isValid, "Tampered payload must be rejected by validator");
     }
 
     @Test
-    @DisplayName("Deve rejeitar assinatura assinada com segredo incorreto")
+    @DisplayName("Should reject signatures created with an incorrect secret key")
     void shouldRejectWrongSecret() throws Exception {
         String xmlPayload = "<feed><entry><yt:videoId>abc123xyz</yt:videoId></entry></feed>";
         byte[] payloadBytes = xmlPayload.getBytes(StandardCharsets.UTF_8);
@@ -65,18 +65,18 @@ class HmacSignatureValidatorTest {
 
         boolean isValid = validator.isValid(payloadBytes, signatureHeader);
 
-        assertFalse(isValid, "Assinatura gerada com segredo incorreto deve ser rejeitada");
+        assertFalse(isValid, "Signature generated with wrong secret must be rejected");
     }
 
     @Test
-    @DisplayName("Deve rejeitar cabeçalho de assinatura nulo ou mal formatado")
+    @DisplayName("Should reject null, empty, or malformed signature headers")
     void shouldRejectMalformedHeader() {
         byte[] payloadBytes = "test".getBytes(StandardCharsets.UTF_8);
 
-        assertFalse(validator.isValid(payloadBytes, null), "Cabeçalho nulo deve ser rejeitado");
-        assertFalse(validator.isValid(payloadBytes, ""), "Cabeçalho vazio deve ser rejeitado");
-        assertFalse(validator.isValid(payloadBytes, "invalid_prefix_hash"), "Cabeçalho sem prefixo sha1= deve ser rejeitado");
-        assertFalse(validator.isValid(null, "sha1=123456"), "Payload nulo deve ser rejeitado");
+        assertFalse(validator.isValid(payloadBytes, null), "Null header must be rejected");
+        assertFalse(validator.isValid(payloadBytes, ""), "Empty header must be rejected");
+        assertFalse(validator.isValid(payloadBytes, "invalid_prefix_hash"), "Header without sha1= prefix must be rejected");
+        assertFalse(validator.isValid(null, "sha1=123456"), "Null payload must be rejected");
     }
 
     private String calculateHmacSha1Hex(byte[] data, String secret) throws Exception {

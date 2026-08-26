@@ -8,14 +8,14 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
- * Configuração do Redis Cache.
+ * Redis Cache Configuration.
  * 
- * Configura o RedisTemplate com:
- * - Chaves em String legível (StringRedisSerializer)
- * - Valores em JSON padronizado (GenericJackson2JsonRedisSerializer)
+ * Configures RedisTemplate with:
+ * - Human-readable string keys (StringRedisSerializer)
+ * - Standardized JSON values (GenericJackson2JsonRedisSerializer)
  * 
- * Isso evita caracteres binários estranhos (ex: \xac\xed\x00\x05) ao inspecionar
- * as chaves no Redis CLI ou em ferramentas de visualização.
+ * Prevents binary serialization artifacts (e.g., \xac\xed\x00\x05) when inspecting
+ * keys via Redis CLI or inspection dashboards.
  */
 @Configuration
 public class RedisConfig {
@@ -28,11 +28,11 @@ public class RedisConfig {
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
         GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer();
 
-        // Configuração de Serialização para Chaves Simples
+        // Key and Value Serializers for standard keys
         template.setKeySerializer(stringSerializer);
         template.setValueSerializer(jsonSerializer);
 
-        // Configuração de Serialização para Hashes
+        // Hash Key and Value Serializers
         template.setHashKeySerializer(stringSerializer);
         template.setHashValueSerializer(jsonSerializer);
 

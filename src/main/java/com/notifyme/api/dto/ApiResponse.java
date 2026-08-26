@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
- * Envelope padronizado de resposta da API REST.
+ * Standardized API response envelope for REST endpoints.
  * 
- * @param <T> Tipo do corpo de dados da resposta.
+ * @param <T> Payload body data type.
  */
 @Data
 @Builder

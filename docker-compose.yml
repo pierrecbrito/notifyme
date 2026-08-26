@@ -1,11 +1,11 @@
 services:
-  # 1. RabbitMQ: Broker de Mensageria
+  # 1. RabbitMQ: Message Broker
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: notifyme-rabbitmq
     ports:
-      - "5672:5672"    # Porta do protocolo AMQP (usada pelo Spring Boot)
-      - "15672:15672"  # Painel de Controle Web (http://localhost:15672 - login: guest / guest)
+      - "5672:5672"    # AMQP protocol port (used by Spring Boot)
+      - "15672:15672"  # Web Management Dashboard (http://localhost:15672 - credentials: guest / guest)
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -15,19 +15,19 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. Redis: Cache em Memória e Idempotência
+  # 2. Redis: In-Memory Cache and Idempotency Lock Store
   redis:
     image: redis:7-alpine
     container_name: notifyme-redis
     ports:
-      - "6379:6379"    # Porta de comunicação padrão do Redis
+      - "6379:6379"    # Redis default port
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
 
-  # 3. DynamoDB Local: Banco NoSQL Particionado da AWS rodando localmente
+  # 3. DynamoDB Local: Local AWS NoSQL Partitioned Database
   dynamodb-local:
     image: amazon/dynamodb-local:latest
     container_name: notifyme-dynamodb
@@ -35,16 +35,16 @@ services:
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
     working_dir: /home/dynamodblocal
     ports:
-      - "8000:8000"    # Endpoint local do DynamoDB (http://localhost:8000)
+      - "8000:8000"    # Local DynamoDB endpoint (http://localhost:8000)
     volumes:
       - ./docker/dynamodb-data:/home/dynamodblocal/data
 
-  # 4. DynamoDB Admin: Painel Visual Web para visualizar tabelas e itens no navegador
+  # 4. DynamoDB Admin: Web GUI for inspecting DynamoDB tables and items in the browser
   dynamodb-admin:
     image: aaronshaf/dynamodb-admin
     container_name: notifyme-dynamodb-admin
     ports:
-      - "8001:8001"    # Interface gráfica Web (http://localhost:8001)
+      - "8001:8001"    # Web Dashboard (http://localhost:8001)
     environment:
       DYNAMO_ENDPOINT: "http://dynamodb-local:8000"
       AWS_REGION: "us-east-1"

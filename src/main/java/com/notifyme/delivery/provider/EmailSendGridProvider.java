@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Provedor de Notificações por E-mail via SendGrid / AWS SES.
+ * Email Notification Provider via SendGrid / AWS SES.
  */
 @Slf4j
 @Component
@@ -23,13 +23,13 @@ public class EmailSendGridProvider implements NotificationProvider {
         String email = preference.getEmail();
 
         if (email == null || email.isBlank()) {
-            log.warn("[EMAIL SendGrid] Usuário {} não possui e-mail cadastrado. Ignorando envio.",
+            log.warn("[EMAIL SendGrid] User {} has no registered email address. Skipping dispatch.",
                     task.userId());
             return;
         }
 
-        // Em produção, aqui montamos o Mail/SendGrid API request com template HTML
-        log.info("[EMAIL SendGrid] ✉️ Enviando e-mail para <{}> (Usuário {}). Assunto: 'Novo vídeo: {}' -> Link: {}",
+        // In production, build SendGrid / SES API request with HTML templates
+        log.info("[EMAIL SendGrid] ✉️ Sending email to <{}> (User {}). Subject: 'New video: {}' -> Link: {}",
                 email, task.userId(), task.title(), task.videoUrl());
     }
 }

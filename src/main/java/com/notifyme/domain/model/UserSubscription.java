@@ -14,7 +14,12 @@ import java.io.Serializable;
 import java.time.Instant;
 
 /**
- * Entidade DynamoDB: Mapeia a tabela 'user_subscriptions'.
+ * DynamoDB Entity: Maps to 'user_subscriptions' table.
+ * 
+ * Scalable NoSQL Data Model:
+ * - Partition Key (PK) = 'channel_id': Groups all followers of a channel in the same partition,
+ *   enabling fast paginated queries during the Fan-out stage.
+ * - Sort Key (SK) = 'user_id': Uniquely identifies subscriptions per user and channel.
  */
 @Setter
 @Builder

@@ -9,7 +9,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * DTO para requisição de inscrição de usuário em canal do YouTube.
+ * DTO for subscribing a user to a YouTube creator channel.
  */
 @Data
 @Builder

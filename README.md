@@ -1,76 +1,76 @@
 # NotifyMe 🔔
 
-Sistema de alta escala para ingestão de eventos do YouTube (WebSub) e entrega resiliente de notificações multicanal (Push, E-mail, SMS).
+High-scale event-driven notification engine for YouTube WebSub (PubSubHubbub) ingestion and resilient multi-channel delivery (Push, Email, SMS).
 
 ---
 
-## 📌 1. Requisitos do Sistema
+## 📌 1. System Requirements
 
-### Requisitos Funcionais (O que o sistema FAZ)
-* **Receber avisos do YouTube:** Identificar automaticamente quando um canal posta vídeo novo via WebSub (PubSubHubbub).
-* **Seguir canais:** Permitir ao usuário escolher de quais criadores quer receber alertas.
-* **Enviar notificações:** Disparar alertas via Push Notification, E-mail e SMS.
-* **Escolha de canal de envio:** Usuário define a preferência de canal de envio (ex.: apenas Push, apenas E-mail, múltiplos).
-* **Histórico:** Exibir notificações passadas dentro do aplicativo.
+### Functional Requirements (What the system DOES)
+* **Ingest YouTube Updates:** Automatically detect new video uploads via WebSub (PubSubHubbub).
+* **Follow Channels:** Allow users to subscribe to creator channels to receive alerts.
+* **Multi-Channel Dispatch:** Send notifications via Push (FCM), Email (SendGrid/SES), and SMS (Twilio).
+* **Delivery Preferences:** Enable users to define preferred channels (e.g., Push only, Email only, or multi-channel).
+* **Notification History:** Display past notification events within the application.
 
-### Requisitos Não Funcionais (Como o sistema se COMPORTA)
-* **Escalabilidade:** Suportar milhões de notificações simultâneas em picos de grandes canais.
-* **Baixa Latência:** Entrega do aviso ao usuário final em menos de 5 segundos.
-* **Confiabilidade:** Garantir que nenhuma notificação seja perdida (at-least-once delivery com idempotência).
-* **Segurança:** Validar se a notificação originou-se legitimamente do YouTube via HMAC Signature / WebSub verification (evitar fakes).
-* **Disponibilidade:** Manter o fluxo de envio ativo mesmo se serviços secundários (como o banco de histórico) estiverem fora do ar.
+### Non-Functional Requirements (How the system BEHAVES)
+* **Scalability:** Handle millions of simultaneous notifications during traffic spikes for large channels.
+* **Low Latency:** End-to-end delivery from webhook ingestion to user device in less than 5 seconds.
+* **Reliability:** At-least-once delivery guarantee with dead-letter queue (DLQ) recovery and idempotency.
+* **Security:** Cryptographically verify webhook authenticity via HMAC-SHA1 signatures from YouTube to prevent spoofing.
+* **High Availability:** Maintain delivery pipeline uptime even during transient outages of secondary databases.
 
 ---
 
-## 🏗️ 2. Arquitetura em Camadas (Desacoplamento de Ponta a Ponta)
+## 🏗️ 2. Layered Architecture (Decoupled End-to-End Flow)
 
 ```mermaid
 flowchart TD
     YT[YouTube Hub / WebSub Publisher] -->|HTTP POST XML + HMAC| GW[API Gateway / Load Balancer]
-    GW --> WV[Webhook Validator]
-    WV -->|200 OK em < 100ms| YT
-    WV -->|Evento: channel_id, video_url| NVQ[(New Video Queue)]
+    GW --> WV[Webhook Ingestion & Validator]
+    WV -->|200 OK in < 100ms| YT
+    WV -->|Event: channel_id, video_url| NVQ[(New Video Queue)]
 
-    NVQ --> FP[Fan-out Processor]
-    FP -->|Consulta inscritos particionados| DB[(User Subscriptions DB\nDynamoDB/MongoDB)]
-    FP -->|Fatias em chunks de 500| DTQ[(Delivery Tasks Queue)]
+    NVQ --> FP[Fan-out Service]
+    FP -->|Partitioned subscriber query| DB[(User Subscriptions DB\nDynamoDB Partition Key)]
+    FP -->|Chunked in 500 batches| DTQ[(Delivery Tasks Queue)]
 
     DTQ --> DW[Delivery Workers\nAutoscale 1..N]
-    DW -->|Leitura ultrarrápida| RC[(Redis Cache\nUser Settings)]
+    DW -->|Ultra-fast lookup < 1ms| RC[(Redis Cache\nUser Settings)]
     
     DW -->|Push| FCM[Firebase FCM]
     DW -->|Email| SG[SendGrid / SES]
     DW -->|SMS| TW[Twilio]
     
-    DW -.->|Falha após retries| DLQ[(Dead Letter Queue / Failed Notifs)]
+    DW -.->|Failures after retries| DLQ[(Dead Letter Queue / Failed Notifs)]
 
     FCM --> USR((Followers / Subscribers))
     SG --> USR
     TW --> USR
 ```
 
-### 1. Ingestão & Validação (Webhook Handler)
-* **Componentes:** *API Gateway / Load Balancer* (Entry Point) + *Webhook Validator* (Node.js/TypeScript).
-* **Fluxo:** Recebe a requisição `HTTP POST (XML/HMAC Signature)` enviada pelo *YouTube Hub (WebSub Publisher)*, valida a assinatura criptográfica para garantir a segurança e despacha um evento leve (`channel_id`, `video_url`) para a fila.
-* **Métrica:** Retorna resposta `200 OK` ao YouTube em menos de 100ms.
+### 1. Ingestion & Validation (Webhook Handler)
+* **Components:** *API Gateway / Load Balancer* + *Webhook Controller & Service* (Spring Boot).
+* **Flow:** Receives `HTTP POST (XML/HMAC Signature)` from *YouTube Hub (WebSub Publisher)*, verifies the cryptographic HMAC-SHA1 signature, and publishes a lightweight domain event (`channelId`, `videoUrl`) to RabbitMQ.
+* **Metric:** Returns `200 OK` response to YouTube in under 100ms.
 
-### 2. Descoberta & Fan-out (Fan-out Service)
-* **Componente:** *Fan-out Processor* (Worker especializado em consultas).
-* **Fluxo:** Consome o evento da **New Video Queue**, consulta os inscritos no banco particionado (*User Subscriptions Sharded* via DynamoDB/MongoDB com chave de partição por `channel_id`), fatia a lista de seguidores em *chunks* de 500 usuários e enfileira as tarefas individuais na fila **Delivery Tasks**.
+### 2. Discovery & Fan-out (Fan-out Service)
+* **Component:** *Fan-out Processor & Service*.
+* **Flow:** Consumes from **New Video Queue**, checks Redis atomic lock for idempotency, queries subscribers from DynamoDB (partitioned by `channel_id`), slices followers into 500-user chunks, and enqueues individual tasks into **Delivery Tasks Queue**.
 
-### 3. Mensageria & Cache (O Coração da Escala)
-* **Filas:** RabbitMQ, Apache Kafka ou AWS SQS armazenam as tarefas de envio em trânsito, garantindo desacoplamento e tolerância a lentidões externas.
-* **Cache:** **Redis Cache (User Settings)** armazena as preferências de notificação do usuário em memória para leitura ultrarrápida.
+### 3. Messaging & Cache (The Core of Scale)
+* **Broker:** RabbitMQ manages queues with exchange routing, retry with exponential backoff, and Dead Letter Exchanges (DLX/DLQ).
+* **Cache:** **Redis Cache** stores user preferences in-memory for sub-millisecond lookups and atomic idempotency locks (`SETNX`).
 
-### 4. Execução & Entrega (Execution & Delivery)
-* **Componente:** **Delivery Workers (Autoscale 1..N)** com capacidade de escalonamento automático de tarefas (*process tasks autoscale*).
-* **Fluxo:**
-  1. Consome o ID do usuário e consulta sua preferência no **Redis Cache**.
-  2. Roteia a mensagem para o serviço correspondente.
-  3. **Tratamento de Falhas:** Em caso de falhas repetidas da API externa, aplica **exponential backoff** com jitter e move a mensagem para a **DLQ (Failed Notifs / Dead Letter Queue)** para reprocessamento sem perda de dados.
+### 4. Execution & Delivery (Delivery Workers)
+* **Component:** **Delivery Workers** (Autoscaled).
+* **Flow:**
+  1. Consumes delivery task and retrieves user preferences from **Redis Cache** (< 1ms).
+  2. Routes notifications to active channels using the Strategy pattern (`PushFcmProvider`, `EmailSendGridProvider`, `SmsTwilioProvider`).
+  3. **Fault Tolerance:** Isolates channel errors, applies exponential backoff on retries, and forwards unrecoverable failures to the **DLQ (Dead Letter Queue)**.
 
-### 5. Provedores Externos & Destinatários (External Providers & Clients)
-* **Push Notification:** Roteado via **Firebase FCM (Push)** $\rightarrow$ *deliver push*.
-* **E-mail:** Roteado via **SendGrid / SES (Email)** $\rightarrow$ *deliver email*.
-* **SMS:** Roteado via **Twilio (SMS)** $\rightarrow$ *deliver SMS*.
-* **Destino:** **Followers / Subscribers** (usuários finais).
+### 5. External Providers & Clients
+* **Push Notification:** Dispatched via **Firebase FCM (Push)**.
+* **Email:** Dispatched via **SendGrid / AWS SES (Email)**.
+* **SMS:** Dispatched via **Twilio (SMS)**.
+* **Target Audience:** End-user subscribers and followers.

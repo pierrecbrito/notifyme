@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Provedor de Notificações Push via Firebase Cloud Messaging (FCM).
+ * Push Notification Provider via Firebase Cloud Messaging (FCM).
  */
 @Slf4j
 @Component
@@ -25,13 +25,13 @@ public class PushFcmProvider implements NotificationProvider {
         List<String> deviceTokens = preference.getDeviceTokens();
 
         if (deviceTokens == null || deviceTokens.isEmpty()) {
-            log.warn("[FCM PUSH] Usuário {} não possui tokens de dispositivos cadastrados. Ignorando envio.",
+            log.warn("[FCM PUSH] User {} has no registered device tokens. Skipping dispatch.",
                     task.userId());
             return;
         }
 
-        // Em produção, aqui usamos o FirebaseMessaging.getInstance().sendEachForMulticast(message)
-        log.info("[FCM PUSH] ✅ Disparando Push para {} dispositivo(s) do usuário {}. Vídeo: '{}' ({})",
+        // In production, invoke FirebaseMessaging.getInstance().sendEachForMulticast(message)
+        log.info("[FCM PUSH] ✅ Dispatching Push to {} device(s) for user {}. Video: '{}' ({})",
                 deviceTokens.size(), task.userId(), task.title(), task.videoUrl());
     }
 }

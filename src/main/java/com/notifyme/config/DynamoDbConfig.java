@@ -13,11 +13,11 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import java.net.URI;
 
 /**
- * Configuração do AWS SDK v2 para DynamoDB.
+ * AWS SDK v2 Configuration for DynamoDB.
  * 
- * Cria os Beans:
- * 1. DynamoDbClient (baixo nível): gerencia a conexão HTTP e credenciais.
- * 2. DynamoDbEnhancedClient (alto nível): mapeia classes Java diretamente para tabelas NoSQL.
+ * Provides:
+ * 1. DynamoDbClient (low-level): manages HTTP connections and credentials.
+ * 2. DynamoDbEnhancedClient (high-level): maps Java classes directly to NoSQL tables.
  */
 @Configuration
 public class DynamoDbConfig {
@@ -35,8 +35,8 @@ public class DynamoDbConfig {
     private String secretKey;
 
     /**
-     * Cliente de baixo nível do DynamoDB.
-     * Suporta tanto o DynamoDB Local (via endpointOverride) quanto a AWS real.
+     * Low-level DynamoDB client.
+     * Supports both Local DynamoDB (via endpointOverride) and production AWS cloud.
      */
     @Bean
     public DynamoDbClient dynamoDbClient() {
@@ -46,7 +46,7 @@ public class DynamoDbConfig {
                         AwsBasicCredentials.create(accessKey, secretKey)
                 ));
 
-        // Se houver um endpoint configurado (ex: http://localhost:8000), sobrescreve o padrão da AWS
+        // Override endpoint if provided (e.g., http://localhost:8000 for DynamoDB Local)
         if (endpoint != null && !endpoint.isBlank()) {
             builder.endpointOverride(URI.create(endpoint));
         }
@@ -55,8 +55,8 @@ public class DynamoDbConfig {
     }
 
     /**
-     * Cliente de alto nível (Enhanced Client).
-     * Permite fazer CRUD orientado a objetos com anotações como @DynamoDbBean.
+     * High-level Enhanced Client.
+     * Enables object-oriented CRUD operations with annotations such as @DynamoDbBean.
      */
     @Bean
     public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient dynamoDbClient) {

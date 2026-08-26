@@ -26,7 +26,7 @@ class WebhookControllerTest {
     private WebhookService webhookService;
 
     @Test
-    @DisplayName("GET /api/v1/webhook/youtube - Deve responder ao handshake WebSub com o hub.challenge")
+    @DisplayName("GET /api/v1/webhook/youtube - Should respond to WebSub handshake with hub.challenge")
     void shouldRespondToWebSubHandshake() throws Exception {
         mockMvc.perform(get("/api/v1/webhook/youtube")
                         .param("hub.mode", "subscribe")
@@ -39,15 +39,15 @@ class WebhookControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/webhook/youtube - Deve retornar 400 se hub.challenge não for informado")
+    @DisplayName("GET /api/v1/webhook/youtube - Should return 400 Bad Request when hub.challenge is missing")
     void shouldReturnBadRequestWhenChallengeMissing() throws Exception {
         mockMvc.perform(get("/api/v1/webhook/youtube"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("hub.challenge ausente"));
+                .andExpect(content().string("Missing hub.challenge"));
     }
 
     @Test
-    @DisplayName("POST /api/v1/webhook/youtube - Deve retornar 200 OK quando o webhook for válido")
+    @DisplayName("POST /api/v1/webhook/youtube - Should return 200 OK when webhook notification is valid")
     void shouldAcceptValidWebhookNotification() throws Exception {
         String xmlPayload = "<feed><entry><yt:videoId>v123</yt:videoId></entry></feed>";
         String signature = "sha1=valid_hash_123";
@@ -60,11 +60,11 @@ class WebhookControllerTest {
                         .content(xmlPayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Evento processado e enfileirado com sucesso"));
+                .andExpect(jsonPath("$.message").value("Event processed and enqueued successfully"));
     }
 
     @Test
-    @DisplayName("POST /api/v1/webhook/youtube - Deve retornar 403 Forbidden se a assinatura HMAC for inválida")
+    @DisplayName("POST /api/v1/webhook/youtube - Should return 403 Forbidden when HMAC signature is invalid")
     void shouldRejectInvalidHmacSignature() throws Exception {
         String xmlPayload = "<feed><entry><yt:videoId>fake_video</yt:videoId></entry></feed>";
         String signature = "sha1=invalid_signature";
@@ -77,6 +77,6 @@ class WebhookControllerTest {
                         .content(xmlPayload))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Assinatura HMAC inválida ou ausente"));
+                .andExpect(jsonPath("$.message").value("Invalid or missing HMAC signature"));
     }
 }

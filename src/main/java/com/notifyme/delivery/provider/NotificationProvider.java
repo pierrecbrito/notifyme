@@ -5,24 +5,24 @@ import com.notifyme.domain.model.NotificationChannel;
 import com.notifyme.domain.model.UserPreference;
 
 /**
- * Contrato (Interface) para Provedores de Notificação.
+ * Strategy Contract (Interface) for Notification Providers.
  * 
- * Permite aplicar o padrão de projeto Strategy: cada canal de envio
- * (FCM, SendGrid, Twilio) implementa esta interface e é acionado dinamicamente
- * de acordo com as preferências ativas do usuário.
+ * Implements the Strategy design pattern: each delivery channel provider
+ * (FCM, SendGrid, Twilio) implements this interface and is dynamically triggered
+ * based on user active channel preferences.
  */
 public interface NotificationProvider {
 
     /**
-     * Retorna o canal suportado por este provedor (PUSH, EMAIL, SMS).
+     * Returns the channel supported by this provider (PUSH, EMAIL, SMS).
      */
     NotificationChannel getChannel();
 
     /**
-     * Executa o disparo da notificação para o usuário.
+     * Dispatches the notification to the target user.
      * 
-     * @param task Dados da notificação do vídeo publicado.
-     * @param preference Dados de contato e preferências do usuário (em memória via Redis).
+     * @param task Notification metadata for the published video.
+     * @param preference User contact details and active preferences (from Redis in-memory cache).
      */
     void send(DeliveryTaskEvent task, UserPreference preference);
 }

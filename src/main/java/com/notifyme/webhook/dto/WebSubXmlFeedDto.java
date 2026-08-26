@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * DTO para desserialização do Atom XML Feed enviado pelo YouTube WebSub.
+ * DTO for deserializing Atom XML Feeds sent by YouTube WebSub (PubSubHubbub).
  */
 @Data
 @Builder
@@ -35,7 +35,7 @@ public class WebSubXmlFeedDto implements Serializable {
     private List<FeedEntry> entries;
 
     /**
-     * Representa a tag <entry> que contém os detalhes do vídeo publicado ou atualizado.
+     * Represents the <entry> element containing details about a published or updated video.
      */
     @Data
     @Builder
@@ -67,7 +67,7 @@ public class WebSubXmlFeedDto implements Serializable {
     }
 
     /**
-     * Representa a tag <link rel="alternate" href="..."/>
+     * Represents the <link rel="alternate" href="..."/> element.
      */
     @Data
     @NoArgsConstructor

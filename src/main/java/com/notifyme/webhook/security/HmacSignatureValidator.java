@@ -13,11 +13,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 /**
- * Validador Criptográfico de Assinatura HMAC-SHA1.
+ * Cryptographic HMAC-SHA1 Signature Validator.
  * 
- * Garante o Requisito Não-Funcional de Segurança:
- * - Valida se o payload XML foi legitimamente emitido pelo YouTube WebSub Hub.
- * - Utiliza MessageDigest.isEqual para comparação em tempo constante (protege contra Timing Attacks).
+ * Enforces Non-Functional Security Requirements:
+ * - Validates whether the XML payload legitimately originated from YouTube WebSub Hub.
+ * - Uses MessageDigest.isEqual for constant-time comparison (mitigating timing attacks).
  */
 @Slf4j
 @Component
@@ -33,20 +33,20 @@ public class HmacSignatureValidator {
     }
 
     /**
-     * Valida se o cabeçalho X-Hub-Signature corresponde ao payload recebido.
+     * Validates if the X-Hub-Signature header matches the received raw payload.
      * 
-     * @param rawPayload Corpo bruto (bytes) da requisição HTTP recebida.
-     * @param signatureHeader Valor do cabeçalho "X-Hub-Signature" (ex: "sha1=4a5b...").
-     * @return true se a assinatura for válida e autêntica; false caso contrário.
+     * @param rawPayload Received raw HTTP request body bytes.
+     * @param signatureHeader Value of the "X-Hub-Signature" header (e.g., "sha1=4a5b...").
+     * @return true if the signature is authentic; false otherwise.
      */
     public boolean isValid(byte[] rawPayload, String signatureHeader) {
         if (signatureHeader == null || !signatureHeader.startsWith(SIGNATURE_PREFIX)) {
-            log.warn("Assinatura ausente ou com formato inválido no cabeçalho X-Hub-Signature");
+            log.warn("Missing or malformed signature in X-Hub-Signature header");
             return false;
         }
 
         if (rawPayload == null || rawPayload.length == 0) {
-            log.warn("Payload recebido está vazio");
+            log.warn("Received payload is empty");
             return false;
         }
 
@@ -56,20 +56,20 @@ public class HmacSignatureValidator {
 
             byte[] calculatedHashBytes = calculateHmacSha1(rawPayload, secretKey);
 
-            // Comparação em tempo constante para evitar ataques de temporização (Timing Attacks)
+            // Constant-time comparison to prevent side-channel timing attacks
             boolean matches = MessageDigest.isEqual(expectedHashBytes, calculatedHashBytes);
             if (!matches) {
-                log.warn("Assinatura HMAC calculada não confere com a assinatura enviada pelo YouTube");
+                log.warn("Calculated HMAC signature does not match the signature provided by YouTube");
             }
             return matches;
         } catch (Exception e) {
-            log.error("Erro ao validar assinatura HMAC: {}", e.getMessage(), e);
+            log.error("Error validating HMAC signature: {}", e.getMessage(), e);
             return false;
         }
     }
 
     /**
-     * Calcula o hash HMAC-SHA1 sobre os bytes do payload usando a chave secreta.
+     * Calculates the HMAC-SHA1 hash over raw bytes using the shared secret key.
      */
     private byte[] calculateHmacSha1(byte[] data, String secret) throws NoSuchAlgorithmException, InvalidKeyException {
         SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_SHA1_ALGORITHM);

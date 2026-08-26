@@ -6,7 +6,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Tarefa de Envio: Gerada pelo Fan-out Service e enfileirada em 'notifyme.delivery.tasks'.
+ * Delivery Task Event: Created by the Fan-out Service and published to 'notifyme.delivery.tasks'.
+ * 
+ * Each instance represents an individual work unit for dispatching
+ * a new video notification to a specific channel subscriber.
  */
 public record DeliveryTaskEvent(
         String taskId,
@@ -24,8 +27,7 @@ public record DeliveryTaskEvent(
     private static final long serialVersionUID = 1L;
 
     /**
-     * Construtor de fábrica para criar uma nova tarefa com taskId gerado automaticamente
-     * e primeira tentativa (attempt = 1).
+     * Factory constructor that generates an automatic taskId and initial attempt count (attempt = 1).
      */
     public static DeliveryTaskEvent from(
             String userId,

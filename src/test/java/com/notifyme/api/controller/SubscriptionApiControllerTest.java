@@ -41,7 +41,7 @@ class SubscriptionApiControllerTest {
     private UserPreferenceService userPreferenceService;
 
     @Test
-    @DisplayName("POST /api/v1/subscriptions - Deve cadastrar seguidor com status 201 Created")
+    @DisplayName("POST /api/v1/subscriptions - Should subscribe user with status 201 Created")
     void shouldSubscribeUserSuccessfully() throws Exception {
         SubscribeRequestDto request = SubscribeRequestDto.builder()
                 .channelId("UC123")
@@ -55,13 +55,13 @@ class SubscriptionApiControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Usuário 'user_joao' inscrito com sucesso no canal 'UC123'"));
+                .andExpect(jsonPath("$.message").value("User 'user_joao' subscribed successfully to channel 'UC123'"));
 
         verify(subscriptionService, times(1)).subscribe(any(SubscribeRequestDto.class));
     }
 
     @Test
-    @DisplayName("GET /api/v1/subscriptions/{channelId} - Deve retornar lista de inscritos com status 200")
+    @DisplayName("GET /api/v1/subscriptions/{channelId} - Should return subscriber list with status 200 OK")
     void shouldGetChannelSubscribers() throws Exception {
         when(subscriptionService.getActiveSubscribers("UC123")).thenReturn(List.of("user_joao", "user_maria"));
 
@@ -74,7 +74,7 @@ class SubscriptionApiControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/users/{userId}/preferences - Deve salvar preferências no Redis com status 200")
+    @DisplayName("POST /api/v1/users/{userId}/preferences - Should save user preferences in Redis with status 200 OK")
     void shouldSaveUserPreferences() throws Exception {
         UserPreference preference = UserPreference.builder()
                 .enabledChannels(Set.of(NotificationChannel.PUSH, NotificationChannel.EMAIL))
@@ -87,13 +87,13 @@ class SubscriptionApiControllerTest {
                         .content(objectMapper.writeValueAsString(preference)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Preferências salvas com sucesso no Redis para o usuário: user_joao"));
+                .andExpect(jsonPath("$.message").value("Preferences saved successfully in Redis for user: user_joao"));
 
         verify(userPreferenceService, times(1)).savePreference(any(UserPreference.class));
     }
 
     @Test
-    @DisplayName("GET /api/v1/users/{userId}/preferences - Deve retornar preferências do usuário")
+    @DisplayName("GET /api/v1/users/{userId}/preferences - Should return cached user preferences")
     void shouldGetUserPreferences() throws Exception {
         UserPreference preference = UserPreference.builder()
                 .userId("user_joao")

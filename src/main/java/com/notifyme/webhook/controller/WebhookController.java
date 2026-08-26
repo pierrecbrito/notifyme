@@ -9,9 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller de Ingestão de Webhooks do YouTube WebSub (PubSubHubbub).
+ * YouTube WebSub (PubSubHubbub) Webhook Ingestion Controller.
  * 
- * Camada fina de entrada HTTP que delega o processamento para o WebhookService.
+ * Thin HTTP entry layer that delegates processing to WebhookService.
  */
 @Slf4j
 @RestController
@@ -25,8 +25,8 @@ public class WebhookController {
     }
 
     /**
-     * Handshake do WebSub: O YouTube chama este endpoint via GET ao assinar um canal.
-     * Deve responder 200 OK com o 'hub.challenge' como texto plano.
+     * WebSub Handshake: Called via GET by YouTube Hub upon subscribing to a channel topic.
+     * Must return 200 OK with the 'hub.challenge' as plain text response body.
      */
     @GetMapping(produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> handleWebSubVerification(
@@ -35,18 +35,18 @@ public class WebhookController {
             @RequestParam(name = "hub.challenge", required = false) String challenge,
             @RequestParam(name = "hub.lease_seconds", required = false) String leaseSeconds
     ) {
-        log.info("Recebido handshake do YouTube WebSub. Mode: {}, Topic: {}", mode, topic);
+        log.info("Received YouTube WebSub handshake. Mode: {}, Topic: {}", mode, topic);
 
         if (challenge == null || challenge.isBlank()) {
-            log.warn("Handshake recebido sem hub.challenge");
-            return ResponseEntity.badRequest().body("hub.challenge ausente");
+            log.warn("Handshake received without hub.challenge");
+            return ResponseEntity.badRequest().body("Missing hub.challenge");
         }
 
         return ResponseEntity.ok(challenge);
     }
 
     /**
-     * Ingestão de Notificação de Vídeo: Chamado pelo YouTube via POST quando sai vídeo novo.
+     * Video Publication Ingestion: Called via POST by YouTube when a new video is published.
      */
     @PostMapping(consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_ATOM_XML_VALUE, MediaType.TEXT_XML_VALUE})
     public ResponseEntity<ApiResponse<Void>> handleVideoNotification(
@@ -57,17 +57,17 @@ public class WebhookController {
             boolean success = webhookService.processNotification(rawPayload, signatureHeader);
             if (!success) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.error("Assinatura HMAC inválida ou ausente"));
+                        .body(ApiResponse.error("Invalid or missing HMAC signature"));
             }
 
-            return ResponseEntity.ok(ApiResponse.ok("Evento processado e enfileirado com sucesso"));
+            return ResponseEntity.ok(ApiResponse.ok("Event processed and enqueued successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("Erro inesperado no processamento do webhook: {}", e.getMessage(), e);
+            log.error("Unexpected error processing webhook notification: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erro interno ao processar notificação"));
+                    .body(ApiResponse.error("Internal error processing notification"));
         }
     }
 }

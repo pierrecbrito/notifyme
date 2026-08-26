@@ -15,10 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Repositório DynamoDB para Inscrições de Usuários (user_subscriptions).
+ * DynamoDB Repository for User Subscriptions (user_subscriptions table).
  * 
- * Utiliza o DynamoDbEnhancedClient para realizar consultas de alta velocidade
- * indexadas por Partition Key (channel_id).
+ * Uses DynamoDbEnhancedClient for high-speed queries indexed by Partition Key (channel_id).
  */
 @Slf4j
 @Repository
@@ -33,30 +32,30 @@ public class SubscriptionRepository {
     }
 
     /**
-     * Cria a tabela automaticamente no DynamoDB Local se ela ainda não existir.
+     * Automatically creates the table in DynamoDB Local if it does not exist yet.
      */
     @PostConstruct
     public void initTable() {
         try {
             table.createTable();
-            log.info("Tabela '{}' criada com sucesso no DynamoDB", UserSubscription.TABLE_NAME);
+            log.info("Table '{}' created successfully in DynamoDB", UserSubscription.TABLE_NAME);
         } catch (ResourceInUseException e) {
-            log.debug("Tabela '{}' já existe no DynamoDB", UserSubscription.TABLE_NAME);
+            log.debug("Table '{}' already exists in DynamoDB", UserSubscription.TABLE_NAME);
         } catch (Exception e) {
-            log.warn("Aviso ao verificar/criar tabela '{}': {}", UserSubscription.TABLE_NAME, e.getMessage());
+            log.warn("Notice while verifying/creating table '{}': {}", UserSubscription.TABLE_NAME, e.getMessage());
         }
     }
 
     /**
-     * Salva ou atualiza uma inscrição de usuário em um canal.
+     * Saves or updates a user subscription to a creator channel.
      */
     public void save(UserSubscription subscription) {
         table.putItem(subscription);
     }
 
     /**
-     * Retorna um PageIterable paginado de inscritos para um canal.
-     * Ideal para o Fan-out processar grandes canais em lotes (chunks) sem estourar memória.
+     * Returns a paginated PageIterable of subscribers for a given channel.
+     * Ideal for processing large channels in chunks without exhausting memory.
      */
     public PageIterable<UserSubscription> querySubscribersPaged(String channelId, int pageSize) {
         QueryConditional queryConditional = QueryConditional.keyEqualTo(
@@ -72,7 +71,7 @@ public class SubscriptionRepository {
     }
 
     /**
-     * Retorna a lista de IDs de todos os usuários ativos inscritos em um canal.
+     * Returns the list of active user IDs subscribed to a given channel.
      */
     public List<String> findActiveSubscriberIdsByChannelId(String channelId) {
         List<String> userIds = new ArrayList<>();

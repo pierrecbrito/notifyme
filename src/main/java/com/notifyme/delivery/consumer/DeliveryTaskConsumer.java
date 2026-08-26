@@ -7,8 +7,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Worker Consumidor AMQP: Ouve a fila 'notifyme.delivery.tasks'
- * e delega o disparo multicanal para o DeliveryService.
+ * AMQP Delivery Worker Consumer: Listens to the 'notifyme.delivery.tasks' queue
+ * and delegates multi-channel dispatch to DeliveryService.
  */
 @Slf4j
 @Component
@@ -22,7 +22,7 @@ public class DeliveryTaskConsumer {
 
     @RabbitListener(queues = "${notifyme.queues.delivery-tasks:notifyme.delivery.tasks}")
     public void onDeliveryTask(DeliveryTaskEvent task) {
-        log.debug("Mensagem de tarefa de entrega recebida da fila: {}", task.taskId());
+        log.debug("Delivery task message received from queue: {}", task.taskId());
         deliveryService.processDelivery(task);
     }
 }

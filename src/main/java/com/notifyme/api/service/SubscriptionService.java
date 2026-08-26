@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Camada de Serviço para Inscrições de Usuários no DynamoDB.
+ * Service Layer for User Channel Subscriptions in DynamoDB.
  */
 @Slf4j
 @Service
@@ -23,12 +23,12 @@ public class SubscriptionService {
     }
 
     /**
-     * Inscreve um usuário em um canal do YouTube.
+     * Subscribes a user to a YouTube creator channel.
      */
     public void subscribe(SubscribeRequestDto request) {
         if (request.getChannelId() == null || request.getChannelId().isBlank() ||
                 request.getUserId() == null || request.getUserId().isBlank()) {
-            throw new IllegalArgumentException("channelId e userId são obrigatórios");
+            throw new IllegalArgumentException("channelId and userId are required");
         }
 
         UserSubscription subscription = UserSubscription.builder()
@@ -39,11 +39,11 @@ public class SubscriptionService {
                 .build();
 
         subscriptionRepository.save(subscription);
-        log.info("Inscrição concluída: usuário '{}' -> canal '{}'", request.getUserId(), request.getChannelId());
+        log.info("Subscription created: user '{}' -> channel '{}'", request.getUserId(), request.getChannelId());
     }
 
     /**
-     * Retorna os IDs dos inscritos ativos de um canal.
+     * Retrieves active subscriber user IDs for a given channel.
      */
     public List<String> getActiveSubscribers(String channelId) {
         return subscriptionRepository.findActiveSubscriberIdsByChannelId(channelId);
