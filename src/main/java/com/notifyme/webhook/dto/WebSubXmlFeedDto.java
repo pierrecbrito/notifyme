@@ -1,6 +1,7 @@
 package com.notifyme.webhook.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ public class WebSubXmlFeedDto implements Serializable {
     @JacksonXmlProperty(localName = "title")
     private String feedTitle;
 
+    @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "entry")
     private List<FeedEntry> entries;
 
