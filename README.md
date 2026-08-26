@@ -1,10 +1,10 @@
-# NotifyMe 🔔
+# NotifyMe 
 
 High-scale event-driven notification engine for YouTube WebSub (PubSubHubbub) ingestion and resilient multi-channel delivery (Push, Email, SMS).
 
 ---
 
-## 📌 1. System Requirements
+##  1. System Requirements
 
 ### Functional Requirements (What the system DOES)
 * **Ingest YouTube Updates:** Automatically detect new video uploads via WebSub (PubSubHubbub).
@@ -22,7 +22,7 @@ High-scale event-driven notification engine for YouTube WebSub (PubSubHubbub) in
 
 ---
 
-## 🏗️ 2. Layered Architecture (Decoupled End-to-End Flow)
+##  2. Layered Architecture (Decoupled End-to-End Flow)
 
 ```mermaid
 flowchart TD
